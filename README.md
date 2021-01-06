@@ -1,2 +1,2 @@
 # kubernetes-example
-Demos withs kubernetes
+Demos with kubernetes
