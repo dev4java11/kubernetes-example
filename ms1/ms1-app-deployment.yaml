@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms1app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ms1app
+  template:
+    metadata:
+      labels:
+        app: ms1app
+    spec:
+      containers:
+        - name: ms1app
+          image: dev4java11/ms1:latest
+          ports:
+            - containerPort: 8010
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://ms1db-cip:3306/ms1db?useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false
+            - name: SPRING_DATASOURCE_USERNAME
+              value: ms1
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ms1-secrets
+                  key: ms1pass
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms1app-lb
+spec:
+  type: LoadBalancer
+  selector:
+    app: ms1app
+  ports:
+    - port: 9010
+      targetPort: 8010

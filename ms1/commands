@@ -1,0 +1,11 @@
+kubectl apply -f ms1-secrets.yaml
+kubectl apply -f ms1-db-deployment.yaml
+kubectl apply -f ms1-app-deployment.yaml
+
+minikube service ms1app-lb
+curl <IP>:<PORT>/ms1/api/persons/1
+
+kubectl delete -f ms1-app-deployment.yaml
+kubectl delete -f ms1-db-deployment.yaml
+kubectl delete -f ms1-secrets.yaml
+

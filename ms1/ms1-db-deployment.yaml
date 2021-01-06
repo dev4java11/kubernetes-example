@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ms1-data-pv
+  labels:
+    type: local
+    app: ms1
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/ms1/data"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ms1-data-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms1db-cip
+spec:
+  type: ClusterIP
+  selector:
+    app: ms1db
+  ports:
+    - port: 3306
+      targetPort: 3306
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms1db
+spec:
+  selector:
+    matchLabels:
+      app: ms1db
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ms1db
+    spec:
+      containers:
+      - name: ms1db
+        image: mariadb:latest
+        env:
+        - name: MYSQL_DATABASE
+          value: ms1db
+        - name: MYSQL_USER
+          value: ms1
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ms1-secrets
+              key: ms1pass
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ms1-secrets
+              key: rootpass
+        ports:
+        - containerPort: 3306
+          name: mariadb
+        volumeMounts:
+          - name: mariadb-data
+            mountPath: /var/lib/mysql/
+      volumes:
+        - name: mariadb-data
+          persistentVolumeClaim:
+            claimName: ms1-data-pvc
